@@ -22,6 +22,12 @@ import org.gephi.io.importer.api.EdgeDirectionDefault;
 import org.gephi.io.importer.api.ImportController;
 import org.gephi.io.processor.plugin.DefaultProcessor;
 import org.gephi.layout.plugin.force.StepDisplacement;
+import org.gephi.layout.plugin.noverlap.NoverlapLayout;
+import org.gephi.layout.plugin.forceAtlas.ForceAtlasLayout;
+import org.gephi.layout.plugin.rotate.RotateLayout;
+import org.gephi.layout.plugin.scale.ScaleLayout;
+import org.gephi.layout.plugin.random.RandomLayout;
+import org.gephi.layout.plugin.openord.OpenOrdLayout;
 import org.gephi.layout.plugin.force.yifanHu.YifanHuLayout;
 import org.gephi.preview.api.PreviewController;
 import org.gephi.preview.api.PreviewModel;
@@ -75,9 +81,9 @@ public class GephiFilter {
         String inputLine;
 
         // Import input graph
-        while ((inputLine = br.readLine()) != null) {
-            if (inputLine.charAt(0) != '#') break;
-        }
+        while ((inputLine = br.readLine()) != null)
+            if (inputLine.length()>0 && inputLine.charAt(0)!='#') break;
+
         Container container;
         try {
             File file = new File(new URI("file:"+inputLine));    //Define path to the graph file
@@ -89,9 +95,9 @@ public class GephiFilter {
         }
 
         // Get output format
-        while ((inputLine = br.readLine()) != null) {
-            if (inputLine.charAt(0) != '#') break;
-        }
+        while ((inputLine = br.readLine()) != null)
+            if (inputLine.length()>0 && inputLine.charAt(0)!='#') break;
+
         String exportFormat = inputLine;
 
         //Append imported data to GraphAPI
@@ -117,6 +123,7 @@ public class GephiFilter {
                     inputLine = br.readLine();
                     String[] args = null;
                     if (inputLine != null) args = inputLine.split("\\s+");
+                    if (args.length==1 && args[0].equals("")) args = new String[0];
 
                     if (methodCategory.equals("Filter")) {
                         try {
@@ -127,6 +134,14 @@ public class GephiFilter {
                             } else {
                                 filterController.setSubQuery(parentQuery, q);
                             }
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    if (methodCategory.equals("Layout")) {
+                        try {
+                            executor(gFilter, graph, methodName, args);
                         } catch (ClassNotFoundException e) {
                             e.printStackTrace();
                         }
@@ -194,7 +209,7 @@ public class GephiFilter {
     //////// BEGIN Filters
 
     public Query GiantComponentsFilter(DirectedGraph graph, String[] args) {
-        System.out.println("-- Giant Components Filter");
+        System.out.println("-- Apply Giant Components Filter");
         FilterController filterController = Lookup.getDefault().lookup(FilterController.class);
 
         GiantComponentBuilder.GiantComponentFilter giantComponentFilter = new GiantComponentBuilder.GiantComponentFilter();
@@ -204,7 +219,7 @@ public class GephiFilter {
     }
 
     public Query DegreeFilter(DirectedGraph graph, String[] args) {
-        System.out.println("-- Degree Filter");
+        System.out.println("-- Apply Degree Filter");
         FilterController filterController = Lookup.getDefault().lookup(FilterController.class);
         int lowerBound = Integer.parseInt(args[0]);
         int upperBound = Integer.parseInt(args[1]);
@@ -217,7 +232,7 @@ public class GephiFilter {
     }
 
     public Query InDegreeFilter(DirectedGraph graph, String[] args) {
-        System.out.println("-- In-Degree Filter");
+        System.out.println("-- Apply In-Degree Filter");
         FilterController filterController = Lookup.getDefault().lookup(FilterController.class);
         int lowerBound = Integer.parseInt(args[0]);
         int upperBound = Integer.parseInt(args[1]);
@@ -230,7 +245,7 @@ public class GephiFilter {
     }
 
     public Query NeighborNetworkFilter(DirectedGraph graph, String[] args) {
-        System.out.println("-- Neighbor Network Filter");
+        System.out.println("-- Apply Neighbor Network Filter");
         FilterController filterController = Lookup.getDefault().lookup(FilterController.class);
         int depth = Integer.parseInt(args[0]);
 
@@ -242,4 +257,119 @@ public class GephiFilter {
     }
 
     //////// END Filters
+
+
+    //////// BEGIN Layouts
+
+    public void RotateLayout (DirectedGraph graph, String[] args) {
+        double angle = 0.0;
+        if (args.length > 0) angle = Double.parseDouble(args[0]);
+        System.out.println("-- Run Rotate Layout for " + angle + " degree");
+        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
+
+        RotateLayout layout = new RotateLayout(null, angle);
+        layout.setGraphModel(graphModel);
+
+        layout.initAlgo();
+        layout.goAlgo();
+        layout.endAlgo();
+    }
+
+    public void ScaleLayout (DirectedGraph graph, String[] args) {
+        double factor = 1.0;
+        if (args.length > 0) factor = Double.parseDouble(args[0]);
+        System.out.println("-- Run Scale Layout with factor " + factor);
+        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
+
+        ScaleLayout layout = new ScaleLayout(null, factor);
+        layout.setGraphModel(graphModel);
+
+        layout.initAlgo();
+        layout.goAlgo();
+        layout.endAlgo();
+    }
+
+    public void NoverlapLayout (DirectedGraph graph, String[] args) {
+        int passes = 1;
+        if (args.length > 0) passes = Integer.parseInt(args[0]);
+        System.out.println("-- Run Noverlap Layout for " + passes + " passes");
+        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
+
+        NoverlapLayout layout = new NoverlapLayout(null);
+        layout.setGraphModel(graphModel);
+        layout.resetPropertiesValues();
+        layout.initAlgo();
+
+        for (int i = 0; i < passes && layout.canAlgo(); i++) {
+            layout.goAlgo();
+        }
+        layout.endAlgo();
+    }
+
+    public void ForceAtlasLayout (DirectedGraph graph, String[] args) {
+        int passes = 1;
+        if (args.length > 0) passes = Integer.parseInt(args[0]);
+        System.out.println("-- Run ForceAtlas Layout for " + passes + " passes");
+        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
+
+        ForceAtlasLayout layout = new ForceAtlasLayout(null);
+        layout.setGraphModel(graphModel);
+        layout.resetPropertiesValues();
+        layout.initAlgo();
+
+        for (int i = 0; i < passes && layout.canAlgo(); i++) {
+            layout.goAlgo();
+        }
+        layout.endAlgo();
+    }
+
+    public void OpenOrdLayout (DirectedGraph graph, String[] args) {
+        int passes = 1;
+        if (args.length > 0) passes = Integer.parseInt(args[0]);
+        System.out.println("-- Run OpenOrd Layout for " + passes + " passes");
+        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
+
+        OpenOrdLayout layout = new OpenOrdLayout(null);
+        layout.setGraphModel(graphModel);
+        layout.resetPropertiesValues();
+        layout.setNumIterations(passes);
+
+        layout.initAlgo();
+        layout.goAlgo();
+        layout.endAlgo();
+    }
+
+    public void YifanHuLayout (DirectedGraph graph, String[] args) {
+        int passes = 1;
+        if (args.length > 0) passes = Integer.parseInt(args[0]);
+        System.out.println("-- Run YifanHu Layout for "+passes+" passes");
+        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
+
+        YifanHuLayout layout = new YifanHuLayout(null, new StepDisplacement(1f));
+        layout.setGraphModel(graphModel);
+        layout.resetPropertiesValues();
+        layout.setOptimalDistance(200f);
+        layout.initAlgo();
+
+        for (int i = 0; i < passes && layout.canAlgo(); i++) {
+            layout.goAlgo();
+        }
+        layout.endAlgo();
+    }
+
+    public void RandomLayout (DirectedGraph graph, String[] args) {
+        double spaceSize = 50.0;
+        if (args.length > 0) spaceSize = Double.parseDouble(args[0]);
+        System.out.println("-- Run Random Layout with space size " + spaceSize);
+        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
+
+        RandomLayout layout = new RandomLayout(null, spaceSize);
+        layout.setGraphModel(graphModel);
+
+        layout.initAlgo();
+        layout.goAlgo();
+        layout.endAlgo();
+    }
+
+    //////// END Layouts
 }
