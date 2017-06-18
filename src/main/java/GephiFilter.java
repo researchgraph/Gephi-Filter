@@ -69,9 +69,12 @@ public class GephiFilter {
         FileReader configReader = new FileReader(configFileName);
         BufferedReader br = new BufferedReader(configReader);
 
-        String inputLine = br.readLine();
+        String inputLine;
 
         // Import input graph
+        while ((inputLine = br.readLine()) != null) {
+            if (inputLine.charAt(0) != '#') break;
+        }
         Container container;
         try {
             File file = new File(new URI("file:"+inputLine));    //Define path to the graph file
@@ -81,6 +84,12 @@ public class GephiFilter {
             ex.printStackTrace();
             return;
         }
+
+        // Get output format
+        while ((inputLine = br.readLine()) != null) {
+            if (inputLine.charAt(0) != '#') break;
+        }
+        String exportFormat = inputLine;
 
         //Append imported data to GraphAPI
         importController.process(container, new DefaultProcessor(), workspace);
@@ -92,7 +101,8 @@ public class GephiFilter {
         // Process filters
         Query rootQuery = null;
         Query parentQuery = null;
-        while((inputLine = br.readLine()) != null) {
+        while ((inputLine = br.readLine()) != null) {
+            if (inputLine.length() == 0) continue;
             switch (inputLine.charAt(0)) {
                 case '#' :
                     // skip comments
@@ -101,7 +111,8 @@ public class GephiFilter {
                 case '-' :
                     String methodName = inputLine.split("\\s+")[1];
                     inputLine = br.readLine();
-                    String[] args = inputLine.split("\\s+");
+                    String[] args = null;
+                    if (inputLine != null) args = inputLine.split("\\s+");
                     try {
                         Query q = (Query) executor(gFilter, graph, filterController, methodName, args);
                         if (rootQuery == null) {
@@ -131,6 +142,10 @@ public class GephiFilter {
         // Print graph stats after filtering
         graph = graphModel.getDirectedGraphVisible();
         System.out.println("SUCCESS: After filtering the graph is with " + graph.getNodeCount() + " nodes and " + graph.getEdgeCount() + " edges.");
+
+        // Export to specified format
+        gFilter.exporter(exportFormat);
+        System.out.println("SUCCESS: The processed graph is exported to output." + exportFormat);
     }
 
     public Object executor(GephiFilter gFilter, DirectedGraph graph, FilterController filterController, String methodName, String[] args) throws ClassNotFoundException {
@@ -154,6 +169,16 @@ public class GephiFilter {
             System.out.println("Skip: [" + methodName + "] due to internal error");
         }
         return result;
+    }
+
+    public void exporter(String exportFormat) {
+        ExportController ec = Lookup.getDefault().lookup(ExportController.class);
+        try {
+            ec.exportFile(new File("output."+exportFormat));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return;
+        }
     }
 
     public Query GiantComponentsFilter(DirectedGraph graph, FilterController filterController, String[] args) {
