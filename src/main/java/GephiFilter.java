@@ -21,6 +21,7 @@ import org.gephi.io.importer.api.Container;
 import org.gephi.io.importer.api.EdgeDirectionDefault;
 import org.gephi.io.importer.api.ImportController;
 import org.gephi.io.processor.plugin.DefaultProcessor;
+import org.gephi.layout.plugin.force.StepDisplacement;
 import org.gephi.layout.plugin.force.yifanHu.YifanHuLayout;
 import org.gephi.preview.api.PreviewController;
 import org.gephi.preview.api.PreviewModel;
@@ -50,6 +51,8 @@ public class GephiFilter {
             e.printStackTrace();
         }
     }
+
+    //////// BEGIN Helpers
 
     public void process(GephiFilter gFilter, String configFileName) throws IOException {
         //Initialization - create ProjectController
@@ -110,21 +113,25 @@ public class GephiFilter {
 
                 case '-' :
                     String methodName = inputLine.split("\\s+")[1];
+                    String methodCategory = methodName.substring(methodName.length()-6, methodName.length());
                     inputLine = br.readLine();
                     String[] args = null;
                     if (inputLine != null) args = inputLine.split("\\s+");
-                    try {
-                        Query q = (Query) executor(gFilter, graph, filterController, methodName, args);
-                        if (rootQuery == null) {
-                            rootQuery = q;
-                            parentQuery = q;
+
+                    if (methodCategory.equals("Filter")) {
+                        try {
+                            Query q = (Query) executor(gFilter, graph, methodName, args);
+                            if (rootQuery == null) {
+                                rootQuery = q;
+                                parentQuery = q;
+                            } else {
+                                filterController.setSubQuery(parentQuery, q);
+                            }
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
                         }
-                        else {
-                            filterController.setSubQuery(parentQuery, q);
-                        }
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
                     }
+
                     break;
 
                 default :
@@ -148,10 +155,10 @@ public class GephiFilter {
         System.out.println("SUCCESS: The processed graph is exported to output." + exportFormat);
     }
 
-    public Object executor(GephiFilter gFilter, DirectedGraph graph, FilterController filterController, String methodName, String[] args) throws ClassNotFoundException {
+    public Object executor(GephiFilter gFilter, DirectedGraph graph, String methodName, String[] args) throws ClassNotFoundException {
         Method method;
         try {
-            method = getClass().getDeclaredMethod(methodName, DirectedGraph.class, FilterController.class, String[].class);
+            method = getClass().getDeclaredMethod(methodName, DirectedGraph.class, String[].class);
         } catch (NoSuchMethodException e) {
             System.out.println("Skip: [" + methodName + "] is not implemented");
             return null;
@@ -159,7 +166,7 @@ public class GephiFilter {
 
         Object result = null;
         try {
-            Object[] params = {graph, filterController, args};
+            Object[] params = {graph, args};
             result = method.invoke(gFilter, params);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
@@ -181,16 +188,24 @@ public class GephiFilter {
         }
     }
 
-    public Query GiantComponentsFilter(DirectedGraph graph, FilterController filterController, String[] args) {
+    //////// END Helpers
+
+
+    //////// BEGIN Filters
+
+    public Query GiantComponentsFilter(DirectedGraph graph, String[] args) {
         System.out.println("-- Giant Components Filter");
+        FilterController filterController = Lookup.getDefault().lookup(FilterController.class);
+
         GiantComponentBuilder.GiantComponentFilter giantComponentFilter = new GiantComponentBuilder.GiantComponentFilter();
         giantComponentFilter.init(graph);
         Query queryGiantComponent = filterController.createQuery(giantComponentFilter);
         return queryGiantComponent;
     }
 
-    public Query DegreeFilter(DirectedGraph graph, FilterController filterController, String[] args) {
+    public Query DegreeFilter(DirectedGraph graph, String[] args) {
         System.out.println("-- Degree Filter");
+        FilterController filterController = Lookup.getDefault().lookup(FilterController.class);
         int lowerBound = Integer.parseInt(args[0]);
         int upperBound = Integer.parseInt(args[1]);
 
@@ -201,8 +216,9 @@ public class GephiFilter {
         return queryDegreeFilter;
     }
 
-    public Query InDegreeFilter(DirectedGraph graph, FilterController filterController, String[] args) {
+    public Query InDegreeFilter(DirectedGraph graph, String[] args) {
         System.out.println("-- In-Degree Filter");
+        FilterController filterController = Lookup.getDefault().lookup(FilterController.class);
         int lowerBound = Integer.parseInt(args[0]);
         int upperBound = Integer.parseInt(args[1]);
 
@@ -213,8 +229,9 @@ public class GephiFilter {
         return  queryIndegree;
     }
 
-    public Query NeighborNetworkFilter(DirectedGraph graph, FilterController filterController, String[] args) {
+    public Query NeighborNetworkFilter(DirectedGraph graph, String[] args) {
         System.out.println("-- Neighbor Network Filter");
+        FilterController filterController = Lookup.getDefault().lookup(FilterController.class);
         int depth = Integer.parseInt(args[0]);
 
         NeighborsBuilder.NeighborsFilter neighborsFilter = new NeighborsBuilder.NeighborsFilter();
@@ -223,4 +240,6 @@ public class GephiFilter {
         Query queryNeighbor = filterController.createQuery(neighborsFilter);
         return queryNeighbor;
     }
+
+    //////// END Filters
 }
