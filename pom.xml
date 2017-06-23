@@ -9,7 +9,10 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <main.class>researchgraph.GephiFilter</main.class>
+        <main.class>org.researchgraph.app.GephiFilter</main.class>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <class.path>jars/</class.path>
+        <jdk.version>1.8</jdk.version>
     </properties>
 
     <dependencies>

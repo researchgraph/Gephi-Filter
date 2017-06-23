@@ -1,4 +1,4 @@
-package researchgraph;
+package org.researchgraph.app;
 
 import java.io.*;
 import java.lang.reflect.Method;
