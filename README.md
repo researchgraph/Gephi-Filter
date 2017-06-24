@@ -38,9 +38,6 @@ arguments: degree
 #### ScaleLayout
 arguments: scaleFactor
 
-#### NoverlapLayout
-arguments: iterations (optional)
-
 #### ForceAtlasLayout
 arguments: iterations (optional)
 

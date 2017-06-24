@@ -289,22 +289,22 @@ public class GephiFilter {
         layout.endAlgo();
     }
 
-    public void NoverlapLayout (DirectedGraph graph, String[] args) {
-        int passes = 1;
-        if (args.length > 0) passes = Integer.parseInt(args[0]);
-        System.out.println("-- Run Noverlap Layout for " + passes + " passes");
-        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
-
-        NoverlapLayout layout = new NoverlapLayout(null);
-        layout.setGraphModel(graphModel);
-        layout.resetPropertiesValues();
-        layout.initAlgo();
-
-        for (int i = 0; i < passes && layout.canAlgo(); i++) {
-            layout.goAlgo();
-        }
-        layout.endAlgo();
-    }
+    //todo: to be fixed
+//    public void NoverlapLayout (DirectedGraph graph, String[] args) {
+//        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
+//
+//        NoverlapLayout layout = new NoverlapLayout(null);
+//        layout.setGraphModel(graphModel);
+//        layout.resetPropertiesValues();
+//        layout.initAlgo();
+//
+//        if (layout.canAlgo()) {
+//            System.out.println("-- Run Noverlap Layout");
+//            layout.goAlgo();
+//        }
+//
+//        layout.endAlgo();
+//    }
 
     public void ForceAtlasLayout (DirectedGraph graph, String[] args) {
         int passes = 1;
