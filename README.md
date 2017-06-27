@@ -11,7 +11,7 @@ Three Layers:
 - The executor calls corresponding handling method using Java Reflection <br/>
 
 ## Configuration File
-Fromat ee [graph.config](https://github.com/researchgraph/Gephi-Filter/blob/master/graph.config) <br/>
+Fromat example refer to [graph.config](https://github.com/researchgraph/Gephi-Filter/blob/master/graph.config) <br/>
 Detail parameters of defined tasks see section below.
 
 ## Implemented Methods
@@ -39,6 +39,9 @@ arguments: degree
 arguments: scaleFactor
 
 #### ForceAtlasLayout
+arguments: iterations (optional)
+
+#### ForceAtlas2Layout
 arguments: iterations (optional)
 
 #### OpenOrdLayout
