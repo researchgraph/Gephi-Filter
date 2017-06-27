@@ -194,9 +194,15 @@ public class GephiFilter {
     }
 
     public void exporter(String exportFormat) {
+        //Export only visible graph
         ExportController ec = Lookup.getDefault().lookup(ExportController.class);
+        GraphExporter exporter = (GraphExporter) ec.getExporter(exportFormat);
+        exporter.setExportVisible(true);  //Only exports the visible (filtered) graph
+        ProjectController projectController = Lookup.getDefault().lookup(ProjectController.class);
+        Workspace workspace = projectController.getCurrentWorkspace();
+        exporter.setWorkspace(workspace);
         try {
-            ec.exportFile(new File("output."+exportFormat));
+            ec.exportFile(new File("output." + exportFormat), exporter);
         } catch (IOException ex) {
             ex.printStackTrace();
             return;
