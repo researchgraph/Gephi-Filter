@@ -24,6 +24,7 @@ import org.gephi.io.processor.plugin.DefaultProcessor;
 import org.gephi.layout.plugin.force.StepDisplacement;
 import org.gephi.layout.plugin.noverlap.NoverlapLayout;
 import org.gephi.layout.plugin.forceAtlas.ForceAtlasLayout;
+import org.gephi.layout.plugin.forceAtlas2.ForceAtlas2;
 import org.gephi.layout.plugin.rotate.RotateLayout;
 import org.gephi.layout.plugin.scale.ScaleLayout;
 import org.gephi.layout.plugin.random.RandomLayout;
@@ -319,6 +320,23 @@ public class GephiFilter {
         GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
 
         ForceAtlasLayout layout = new ForceAtlasLayout(null);
+        layout.setGraphModel(graphModel);
+        layout.resetPropertiesValues();
+        layout.initAlgo();
+
+        for (int i = 0; i < passes && layout.canAlgo(); i++) {
+            layout.goAlgo();
+        }
+        layout.endAlgo();
+    }
+
+    public void ForceAtlas2Layout (DirectedGraph graph, String[] args) {
+        int passes = 1;
+        if (args.length > 0) passes = Integer.parseInt(args[0]);
+        System.out.println("-- Run ForceAtlas2 Layout for " + passes + " passes");
+        GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel();
+
+        ForceAtlas2 layout = new ForceAtlas2(null);
         layout.setGraphModel(graphModel);
         layout.resetPropertiesValues();
         layout.initAlgo();
